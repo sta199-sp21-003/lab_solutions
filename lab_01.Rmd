@@ -1,0 +1,72 @@
+---
+title: "Lab 01"
+output:
+  pdf_document: default
+  html_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+# Load packages
+
+```{r load-packages, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(datasauRus)
+``` 
+
+# Exercise 1
+
+The dinosaurus dozen data has 1846 rows and 3 variables. The variables included
+are `dataset` (indicating which dataset the data are from), `x` (the x values),
+and `y` (the y values).
+
+Create the `dino` plot:
+
+```{r plot-dino, fig.height=5, fig.width=5}
+dino_data <- datasaurus_dozen %>%
+  filter(dataset == "dino")
+
+ggplot(data = dino_data, mapping = aes(x = x, y = y)) + 
+  geom_point()
+```
+
+Compute the correlation:
+
+```{r cor-dino}
+dino_data %>%
+  summarize(r = cor(x, y))
+```
+
+Create `star` plot:
+
+```{r plot-star, fig.height=5, fig.width=5}
+star_data <- datasaurus_dozen %>%
+  filter(dataset == "star")
+
+ggplot(data = star_data, mapping = aes(x = x, y = y)) + 
+  geom_point()
+```
+
+Compute the correlation:
+
+```{r cor-star}
+star_data %>%
+  summarize(r = cor(x, y))
+```
+
+Create `circle` plot:
+
+```{r plot-circle, fig.height=5, fig.width=5}
+circle_data <- datasaurus_dozen %>%
+  filter(dataset == "circle")
+
+ggplot(data = circle_data, mapping = aes(x = x, y = y)) + 
+  geom_point()
+```
+
+Compute the correlation:
+
+```{r cor-circle}
+circle_data %>%
+  summarize(r = cor(x, y))
+```

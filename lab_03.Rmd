@@ -1,0 +1,109 @@
+---
+title: "Lab 03"
+editor_options: 
+  chunk_output_type: console
+output:
+  pdf_document: default
+---
+
+# Load packages
+
+```{r load-packages, message = FALSE, warning = FALSE}
+library(tidyverse)
+``` 
+
+# Data
+
+```{r load-data, message = FALSE}
+lego <- read_csv("data/lego.csv")
+```
+
+# Exercise 1
+
+```{r ex-1}
+lego <- lego %>%
+  filter(retail_price > 0, 
+         pieces > 0, 
+         !is.na(retail_price), 
+         !is.na(pieces),
+         !is.na(year))
+
+lego
+```
+
+Should have a careful consideration of the implications of removing rows 
+containing missing data.
+
+Sets with missing price or piece information may differ from sets without 
+missing information. As one possibility, older sets may be more
+likely to not have retail price information recorded. If this is the case, 
+removing sets with missing information leads to biased results.
+
+# Exercise 2
+
+```{r ex-2}
+lego %>% 
+  arrange(desc(retail_price)) %>% 
+  slice(1:3) %>%
+  print(width = Inf)
+```
+
+The three most expensive lego sets are the Millennium Falcon (\$800 with 7,541
+pieces), the Connections Kit (\$755 with 2,455 pieces), and the Death Star 
+(\$500 with 4,016 pieces).
+
+# Exercise 3
+
+```{r ex-3}
+lego <- lego %>%
+  mutate(price_per_piece = retail_price / pieces)
+```
+
+# Exercise 4
+
+```{r ex-4}
+lego %>%
+  arrange(desc(price_per_piece)) %>%
+  slice(1:5) %>% 
+  select(name, themegroup, theme, pieces, price_per_piece)
+```
+
+These sets are electronic components in either the Technical or Educational 
+themegroup: computers, programming bricks, batteries, etc. They contain only 
+a single piece but are expensive.
+
+# Exercise 5
+
+```{r ex-5}
+lego %>%
+  filter(theme == "The Lord of the Rings") %>%
+  group_by(subtheme) %>%
+  arrange(retail_price) %>%
+  slice(1, n()) %>%
+  select(name, subtheme, retail_price, pieces)
+```
+
+# Exercise 6
+
+```{r ex-6}
+yearly_trends <- lego %>%
+  group_by(year) %>%
+  summarize(median_price = median(price_per_piece, na.rm = TRUE),
+            count = n()) 
+```
+
+# Exercise 7
+
+```{r ex-7}
+yearly_trends %>%
+  ggplot(aes(x = year, y = median_price, size = count)) + 
+  geom_point(alpha = 0.50) +
+  geom_line(size = 0.50, alpha = 0.50) + 
+  labs(x = "Year", y = "Median Price ($)", size = "Count", 
+       title = "Change in price per piece of LEGO sets over time")
+```
+
+The median price per piece has remained roughly stable over time since about 
+1990 at about ten cents per piece. There are a few years in the 60's, 70's, and 
+80's with a small sample size (only a few sets produced) and a high median price
+per piece.

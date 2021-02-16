@@ -1,0 +1,130 @@
+---
+title: "Lab 02"
+output:
+  pdf_document: default
+  html_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+# Packages
+
+```{r load-packages, message = FALSE, warning = FALSE}
+library(tidyverse)
+``` 
+
+# Exercise 1
+
+```{r ex-1}
+ggplot(mpg, aes(x = hwy, y = cty, color = class)) + 
+  geom_point() +
+  labs(title = "City versus highway miles per gallon",
+       subtitle = "1999 - 2008",
+       x = "Highway miles per gallon", y = "City miles per gallon",
+       color = "Car class")
+```
+
+# Exercise 2
+
+```{r ex-2}
+ggplot(mpg, aes(x = hwy, y = cty, color = class)) + 
+  geom_jitter() +   
+  labs(title = "City versus highway miles per gallon",
+       subtitle = "1999 - 2008",
+       x = "Highway miles per gallon", y = "City miles per gallon",
+       color = "Car class")
+
+
+#ggplot(mpg, aes(x = hwy, y = cty, color = class)) + 
+#  geom_point(position = "jitter") +   
+#  labs(title = "City versus highway miles per gallon",
+#       x = "Highway miles per gallon", y = "City miles per gallon")
+```
+
+Some cars in this dataset have the same highway and city miles per gallon, so 
+the points are on top of each other. For example, the Toyota Camry Solara and
+the Volkswagen Passat both have 18 city and 26 highway miles per gallon, but 
+there is only one point on the scatterplot. We can't see the trend because some
+of the points are hidden. 
+
+Jittering solves this by adding a small amount of random variation to each
+point. The scatterplot no longer perfectly represents the data, but we get a
+much better sense of the trend.
+
+The first scatterplot is dishonest, as it is not displaying all of the 
+relevant data to a reader.
+
+# Exercise 3
+
+```{r ex-3}
+ggplot(mpg, aes(x = hwy, y = cty)) + 
+  geom_point() + 
+  facet_wrap( ~ drv) +
+    labs(title = "City versus highway miles per gallon",
+         subtitle = "faceted by drive train",
+       x = "Highway miles per gallon", y = "City miles per gallon")
+```
+
+Quite a few things to notice here! 
+
+Higher highway miles per gallon is associated with higher city miles per gallon
+for all types of drive train.
+
+Cars with front wheel drive have more variation in both city and highway miles 
+per gallon than four wheel or rear wheel drive cars. They also have generally
+the highest miles per gallon.
+
+Add more.
+
+# Exercise 4
+
+```{r ex-4}
+ggplot(mpg, aes(x = class, y = cty)) +
+  geom_boxplot() +
+    labs(title = "Distribution of city miles per gallon by class",
+       x = "Class", y = "City miles per gallon")
+```
+
+We observe about what we expect based on car knowledge. Heavier cars (pickups
+and sports utility vehicles) have a lower distribution of city miles per gallon
+and smaller cars (subcompacts, compacts, and midsize cars) have the highest
+distribution of city miles per gallon. Minivans and two-seaters are in the
+middle. 
+
+To better see the relationship, we can orient the axis in a more sensible way
+than alphabetically. Here we arrange the cars in order of descending median
+city miles per gallon.
+
+```{r ex-4-axes}
+ggplot(mpg, aes(x = fct_reorder(class, cty, median, .desc = TRUE), y = cty)) +
+  geom_boxplot() +
+  labs(title = "Distribution of city miles per gallon by class",
+       x = "Class", y = "City miles per gallon")
+```
+
+# Exercise 5
+
+```{r ex-5}
+ggplot(mpg, aes(x = class, fill = drv)) + 
+  geom_bar(position = "fill") +
+  labs(title = "Segemented bar plots of car class",
+       subtitle = "filled by drive train",
+  x = "Class", y = "Count", fill = "Drive Train")
+```
+
+All two-seaters have rear wheel drive. A higher proportion of compacts, 
+midsize cars, and minivans have four wheel drive, and pickups and sports utility
+vehicles tend to be all-wheel drive. Subcompacts are the only car class with
+all three types of drive train.
+
+# Exercise 6
+
+```{r ex-6}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), size = 0.50) + 
+  facet_wrap(~ class, nrow = 2) +
+  theme_bw() +
+  labs(title = "Highway mpg versus displacement",
+       subtitle = "faceted by class",
+         x = "Displacement (litres)", y = "Highway mpg")
+```
