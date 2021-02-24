@@ -1,0 +1,125 @@
+---
+title: "Lab 04 Solutions"
+author: ""
+date: ""
+editor_options: 
+  chunk_output_type: console
+output:
+  pdf_document: default
+---
+
+# Packages
+
+```{r load-packages, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(sf)
+``` 
+
+# Data
+
+```{r load-data, message = FALSE}
+fl_votes <- st_read("data/fl_votes.shp", quiet = TRUE)
+
+fl_votes %>%
+  slice(1:6)
+```
+
+# Exercise 1
+
+The `fl_votes` data is not tidy. The year of the election (2016 and 2020) is
+embedded in the columns `rep16`, `dem16`, `rep20`, and `dem20`. We also have
+a new `geometry` column (actually a list-column) with the simple feature 
+geometries for each Florida county.
+
+# Exercise 2
+
+```{r add-winner}
+fl_votes <- fl_votes %>%
+  mutate(winner20 = if_else(rep20 > dem20, "Donald Trump", "Joe Biden"))
+```
+
+We probably should use `case_when()` here to be safe and handle situations
+with a tie.
+
+# Exercise 3
+
+```{r fl-plot-1}
+ggplot(fl_votes) +
+  geom_sf(aes(fill = winner20)) + 
+  scale_fill_manual(values=c("#DE0100", "#0015BC")) +
+  labs(title = "2020 Presidential election results",
+       subtitle = "Florida counties",
+       fill = "Winner") + 
+  theme_bw()
+```
+
+# Exercise 4
+
+```{r fl-props}
+fl_votes <- fl_votes %>%
+  mutate(prop_rep16 = rep16 / (rep16 + dem16), 
+         prop_rep20 = rep20 / (rep20 + dem20))
+```
+
+# Exercise 5
+
+```{r fl-plot-2}
+ggplot(fl_votes) + 
+  geom_sf(aes(fill = prop_rep20)) + 
+  scale_fill_gradient(low = "#0015BC", high = "#DE0100") +
+    labs(title = "2020 Presidential election results",
+       subtitle = "Florida counties",
+       fill = "Republican share of vote") + 
+    theme_bw()
+```
+
+# Exercise 6
+
+```{r fl-change}
+fl_votes <- fl_votes %>%
+  mutate(diff_rep = prop_rep20 - prop_rep16)
+```
+
+# Exercise 7
+
+```{r fl-plot-3}
+ggplot(fl_votes) +
+  geom_sf(aes(fill = diff_rep)) + 
+  scale_fill_gradient2(low = "#0015BC", midpoint = 0, high = "#DE0100") +
+    labs(title = "Change in Republican share of two party vote",
+       subtitle = "between 2016 and 2020",
+       fill = "Change in R share of vote") + 
+    theme_bw()
+```
+
+# Exercise 8
+
+There are many possibilities here. Some things to notice are below (there are 
+more).
+
+- Using two colors in the first plot is misleading - not everyone in a county
+  voted for a single candidate.
+  
+- Second plot is an improvement over the first. We see a more purple state 
+  compared to the first plot. Cities (mostly Miami, Tallahassee, Tampa, Orlando, 
+  and Jacksonville) favor Clinton, while more rural areas favor Trump,
+  particularly in the Northern part of the state. 
+  
+- Second plot is still misleading since counties are sized according to area
+  rather than population - resizing counties, adding vertical bars corresponding
+  to the number of votes cast, or something similar would be helpful. The 
+  election was more close than this map indicates (51.6% Trump, 48.3% Biden 
+  considering only the two party vote).
+  
+- There is a lot going on in the third plot. Moderate shifts towards the 
+  Democratic candidate occurred in the panhandle, Jacksonville, Fort Myers, 
+  and the Eastern coast of the state, but Orlando and Miami shifted towards the
+  Republican candidate, likely due to the high population of Cuban and 
+  Venezuelan voters in these areas. 
+  
+- We note that the third plot indicates **change** when comparing the share of
+  the two party vote between 2016 and 2020. Bright red Miami-Dade county is a
+  heavily Democratic county, but the Republican share of the two-party vote 
+  increased from 34.8% to 46.3%. Similarly, Escambia county in the far West
+  of the state is still heavily Republican, but the Republican share of the
+  two party vote decreased from 60.7% to 57.6%.

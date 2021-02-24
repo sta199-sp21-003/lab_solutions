@@ -5,7 +5,8 @@
 |-------------|-------------------------|
 | Lab 01      | :white_check_mark:      |
 | Lab 02      | :white_check_mark:      |
-| Lab 03      |                         |
+| Lab 03      | :white_check_mark:      |
+| Lab 04      | :white_check_mark:      |
 
 
 ## Access
