@@ -1,0 +1,103 @@
+---
+title: "Lab 05 Solutions"
+editor_options: 
+  chunk_output_type: console
+output:
+  pdf_document: default
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      comment = "#>", highlight = TRUE,
+                      fig.align = "center")
+```
+
+# Load packages
+
+```{r load-packages}
+library(tidyverse)
+``` 
+
+# Data
+
+```{r load-data}
+concussion <- read_table("http://users.stat.ufl.edu/~winner/data/concussion.dat",
+                         col_names = FALSE)
+```
+
+# Exercises
+
+## Exercise 1
+
+```{r exercise-1}
+concussion <- concussion %>% 
+  rename(gender    = X1,
+         sport     = X2,
+         year      = X3,
+         concussed = X4,
+         count     = X5)
+
+concussion
+```
+
+## Exercise 2
+
+```{r exercise-2}
+concussion <- concussion %>% 
+  mutate(year      = factor(year),
+         concussed = factor(concussed))
+
+concussion
+```
+
+## Exercise 3
+
+```{r exercise-3}
+concussion %>% 
+  group_by(gender, concussed) %>% 
+  summarise(total_count = sum(count)) %>% 
+  mutate(probability = total_count / sum(total_count)) %>% 
+  ungroup() %>% 
+  filter(concussed == 1) %>% 
+  select(gender, probability)
+```
+
+## Exercise 4 
+
+```{r exercise-4}
+concussion %>% 
+  filter(sport == "Soccer") %>% 
+  group_by(concussed) %>% 
+  summarise(total_count = sum(count)) %>% 
+  mutate(probability = total_count / sum(total_count)) %>% 
+  filter(concussed == 1) %>% 
+  select(probability)
+```
+
+## Exercise 5 
+
+```{r exercise-5}
+concussion %>% 
+  group_by(gender, sport, concussed) %>% 
+  summarise(total_count = sum(count)) %>% 
+  mutate(prob = total_count / sum(total_count)) %>% 
+  ungroup() %>% 
+  filter(concussed == 1) %>% 
+  ggplot(mapping = aes(x = sport, y = prob, fill = gender)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  labs(x = "Sport", y = "P(concussion)", fill = "Gender") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+## Exercise 6 
+
+```{r exercise-6}
+concussion %>% 
+  group_by(gender, sport, concussed) %>% 
+  summarise(total_count = sum(count), .groups = "drop") %>% 
+  filter(concussed == 1) %>% 
+  mutate(probability = total_count / sum(total_count)) %>% 
+  filter(gender == "Female", sport == "Soccer") %>% 
+  select(probability)
+```
