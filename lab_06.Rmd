@@ -1,0 +1,149 @@
+---
+title: "Lab 06 Solutions and Rubric"
+subtitle: ""
+author: ""
+date: ""
+editor_options: 
+  chunk_output_type: console
+output:
+  pdf_document: default
+---
+
+```{r set_up, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      comment = "#>", highlight = TRUE,
+                      fig.align = "center")
+set.seed(352790)
+```
+
+# Packages
+
+```{r load_packages}
+library(tidyverse)
+library(infer)
+``` 
+
+# Data
+
+In this lab, you'll work with a couple of datasets.
+
+The `ToothGrowth` dataset can be loaded into R with `data("ToothGrowth)`. It
+contains data on the length of odontoblasts (cells responsible for tooth growth) 
+in 60 guinea pigs. Each animal received one of three dose levels of vitamin C 
+(0.5, 1, and 2 mg/day) by one of two delivery methods, orange juice (`OJ`) or 
+ascorbic acid (`VC`) (a form of vitamin C and coded as VC). For the purposes of 
+this lab, we will ignore the `dose` variable.
+
+```{r load_tooth_data}
+data("ToothGrowth")
+```
+
+The second dataset is a subset of `gss_cat` from the `forcats` package. It
+contains categorical variables from the General Social Survey in 2014.
+
+```{r load_gss_data, echo=TRUE}
+gss_2014 <- gss_cat %>% 
+  filter(year == 2014)
+```
+
+# Exercises
+
+## Exercise 1 
+
+- **Population**: Guinea pigs that receive vitamin C
+- **Parameter**: population mean, $\mu$, length of odontoblasts
+- **Sample**: Guinea pigs assumed to be randomly selected as given in `ToothGrowth`
+
+The observed **sample mean** and **sample size** are given below.
+
+```{r exericse_1}
+ToothGrowth %>% 
+  summarise(mean_length = mean(len),
+            sample_size = n())
+```
+
+
+## Exercise 2 
+
+```{r exercise_2}
+ToothGrowth %>% 
+  specify(response = len) %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "mean") %>% 
+  get_ci(level = 0.99)
+```
+
+We are 99% confident that the mean length of odontoblasts for guinea pigs that
+receive vitamin C is captured by the interval (16.4, 21.4).
+
+## Exercise 3 
+
+```{r exercise_3_obs}
+ToothGrowth %>% 
+  specify(len ~ supp) %>% 
+  calculate(stat = "diff in means", order = c("OJ", "VC"))
+```
+
+```{r exercise_3_viz}
+boot_diff_means <- ToothGrowth %>% 
+  specify(len ~ supp) %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "diff in means", order = c("OJ", "VC"))
+
+visualise(boot_diff_means) +
+  labs(x = "Difference in means (OJ - VC)", y = "Count")
+```
+
+```{r exercise_4_ci}
+get_ci(boot_diff_means, level = 0.95)
+```
+
+We are 95% confident that mean difference in odontoblast length for guinea pigs
+given OJ versus ascorbic acid is captured by the interval (-0.125, 7.34).
+
+## Exercise 4 
+
+Let $\alpha = 0.01$ for the hypothesis test of
+
+$$H_0: p = 0.48$$
+$$H_A: p \ne 0.48$$
+
+```{r exercise_5_observed}
+p_hat <- gss_2014 %>% 
+  mutate(marital = ifelse(marital == "Married", "Married", "Not married")) %>%
+  count(marital) %>% 
+  mutate(proportion = n / sum(n)) %>% 
+  filter(marital == "Married") %>% 
+  select(proportion)
+```
+
+```{r exercise_5_null}
+gss_2014 %>% 
+  mutate(marital = ifelse(marital == "Married", "Married", "Not married")) %>% 
+  specify(response = marital, success = "Married") %>% 
+  hypothesise(null = "point", p = 0.48) %>% 
+  generate(reps = 1000) %>% 
+  calculate(stat = "prop") %>% 
+  get_p_value(obs_stat = p_hat, direction = "two-sided")
+```
+
+Given that the p-value is greater than the significance level, we fail to
+reject the null hypothesis. That is, we fail to reject the claim that the
+proportion of U.S. adults who are married is 0.48 at the 0.01 significance 
+level.
+
+## Exercise 6 
+
+Since the data led us to fail to reject the null hypothesis, the only type of
+"error" that could have been made is a Type II error.
+
+## Exercise 7 
+
+Yes. If we require weaker evidence to reject the null hypothesis, then given 
+that the p-value was 0.016, we would reject $H_0$ at the 0.10 significance
+level.
+
+# References
+
+"Infer - Tidy Statistical Inference". Infer.Netlify.App, 2021, 
+https://infer.netlify.app/index.html.
