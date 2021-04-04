@@ -1,0 +1,111 @@
+---
+title: "Lab 08: Linear Regression"
+subtitle: ""
+author: ""
+date: ""
+editor_options: 
+  chunk_output_type: console
+output:
+  pdf_document: default
+---
+
+```{r set_up, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      comment = "#>", highlight = TRUE,
+                      fig.align = "center")
+```
+
+# Packages
+
+```{r packages}
+library(tidyverse)
+library(broom)
+```
+
+# Exercises
+
+## Exercise 1 
+
+```{r ex-1}
+ggplot(data = midwest, aes(x = percollege , y = percbelowpoverty)) + 
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = " College Education and Poverty Rate in Midwestern Counties",
+       x = "Percentage with a College Degree", y = "Poverty Rate")
+```
+
+## Exercise 2
+
+```{r ex-2}
+college_model <- lm(percbelowpoverty ~ percollege, data = midwest)
+tidy(college_model)
+```
+
+$$\widehat{PercentBelowPoverty} = 16.7 - 0.23~CollegePercentage$$
+
+Slope: For each additional percentage point of people who attended college in a
+Midwest county, the poverty rate is expected to be lower, on average by 0.23
+percentage points. 
+
+Intercept: Counties with 0% of people with college degrees are expected, on 
+average, to have 16.7% of people below poverty.
+
+## Exercise 3
+
+```{r ex-3}
+glance(college_model) %>% 
+  select(r.squared)
+```
+
+Roughly 8% of the variability in the percentage of people below poverty can be
+explained by the percentage of people with a college degree. This is a low $R^2$
+value.
+
+## Exercise 4
+
+```{r ex_4}
+tidy(college_model, conf.int = TRUE, conf.level = 0.95) %>%
+  filter(term == "percollege") %>% 
+  select(starts_with("conf"))
+```
+
+We are 95% confident that for every additional percentage point of people in a
+Midwest county who have a college degree, the percentage of people below poverty
+is expected to decrease, on average, between 0.157 and 0.306 percentage points.
+
+## Exercise 5
+
+```{r ex_5}
+college_model %>%
+  augment(data = midwest) %>%
+  filter(county == "SUMMIT") %>%
+  select(percbelowpoverty, .fitted, .resid)
+```
+
+The model predicts that 11% of people in Summit County, Ohio will be below 
+poverty, but the real value here is 12.1%, a difference of 1.16 percentage 
+points. The difference here is the residual.
+
+## Exercise 6
+
+```{r ex-6}
+state_model <- lm(percbelowpoverty ~ factor(state), data = midwest)
+tidy(state_model)
+```
+
+Slopes: These coefficients describe the expected difference in poverty in that 
+state compared to the baseline level. Here the baseline state is Illinois, so
+predicted poverty, on average, in an Indiana county would be 2.76 percentage 
+points lower than in Illinois. On average, it would be 1.15 percentage points
+higher in Michigan, 0.04 percentage points lower in Ohio, and 1.18 percentage
+points lower in Wisconsin. Only the Indiana coefficient is statistically
+significant.  
+
+Intercept: A county located in Illinois is expected, on average, to have 13.08
+percent of people below poverty. This is significant at the 0.05 level.
+
+$$\widehat{PercentBelowPoverty} = 13.1 - 2.76~State_{IN} + 1.15~State_{MI} -0.04State_{OH}-1.18~State_{WI}$$
+
+# References
+
+Midwest Demographics. Dataset in `ggplot2`. https://ggplot2.tidyverse.org/reference/midwest.html
