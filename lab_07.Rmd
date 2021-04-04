@@ -1,0 +1,148 @@
+---
+title: "Lab 07: CLT-based inference"
+subtitle: ""
+author: ""
+date: ""
+editor_options: 
+  chunk_output_type: console
+output:
+  pdf_document: default
+---
+
+```{r set_up, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      comment = "#>", highlight = TRUE,
+                      fig.align = "center")
+```
+
+# Packages
+
+```{r load_packages}
+library(tidyverse)
+library(infer)
+``` 
+
+# Data
+
+```{r load_data}
+loans <- read_rds("data/lending_club_loans.rds")
+```
+
+# Exercises
+
+## Exercise 1
+
+1. We have a random sample so our observations are independent.
+
+2. We must satisfy the success-failure condition. Our sample data must consist
+   of at least 10 successes and at least 10 failures.
+   
+## Exercise 2 
+
+```{r ex_2}
+loans %>% 
+   filter(state == "AZ") %>% 
+   mutate(pct_credit_utilized = total_credit_utilized / total_credit_limit) %>% 
+   t_test(response = pct_credit_utilized, conf_level = 0.95) %>% 
+   select(ends_with("ci"))
+```
+
+We are 95% confident that the average percentage of credit used by AZ residents
+in Lending Club's loan portfolio is captured by the interval (0.344, 0.409).
+
+## Exercise 3 
+
+$$H_0: p = 0.35$$
+$$H_A: p > 0.35$$
+
+Let $\alpha = 0.01$.
+
+```{r ex_3}
+loans %>% 
+   filter(!is.na(homeownership)) %>% 
+   mutate(homeownership = ifelse(homeownership == "RENT", "rent", "other")) %>% 
+   prop_test(response = homeownership, p = 0.35, alternative = "greater",
+             success = "rent", z = TRUE)
+```
+
+Since the p-value < $\alpha$, we reject the null hypothesis at the 0.01
+significance level. Hence, we reject the claim that proportion of renters in
+Lending Club's loan portfolio is the same as that for traditional banks.
+
+## Exercise 4
+
+```{r ex_4, results='hold'}
+loans %>% 
+   filter(grade == "A") %>% 
+   t_test(response = interest_rate, conf_level = 0.99) %>% 
+   select(ends_with("ci"))
+
+loans %>% 
+   filter(grade == "B") %>% 
+   t_test(response = interest_rate, conf_level = 0.99) %>% 
+   select(ends_with("ci"))
+
+loans %>% 
+   filter(grade == "C") %>% 
+   t_test(response = interest_rate, conf_level = 0.99) %>% 
+   select(ends_with("ci"))
+
+loans %>% 
+   filter(grade == "D") %>% 
+   t_test(response = interest_rate, conf_level = 0.99) %>% 
+   select(ends_with("ci"))
+```
+
+Fancy way to do it:
+
+```{r ex_4_alt}
+loans %>% 
+   filter(grade %in% c("A", "B", "C", "D")) %>% 
+   group_by(grade) %>% 
+   group_modify(~ t_test(x = ., response = interest_rate, conf_level = 0.99)) %>% 
+   select(grade, ends_with("ci"))
+```
+
+The width of the intervals don't vary too much, but the value they are centered
+around does a lot. The point estimate for D is almost three times as large
+as it is for A.
+
+## Exercise 5
+
+If the sample size increases by a factor of four with everything else held
+constant, then the width of the interval will decrease. Specifically it will
+half as wide as the original width.
+
+Quick example
+
+```{r ex_5}
+0.5 + c(-1, 1) * 100 ^ -0.5
+
+0.5 + c(-1, 1) * 400 ^ -0.5
+```
+
+## Exercise 6
+
+For $H_A: \mu > \mu_0$, we need to find the quantile that corresponds to the
+top 1% since $\alpha = 0.01$.
+
+```{r ex_6}
+qt(p = 0.99, df = 38)
+```
+
+Any test statistic value larger than `r qt(p = 0.99, df = 38)` would lead us
+to reject the null hypothesis as it would result in a p-value less than 0.01.
+
+## Exercise 7
+
+This is false. Suppose the p-value from a test is 0.015. According to the
+decision rule, you would reject $H_0$ when $\alpha = 0.02$, but you would
+fail to reject when $\alpha = 0.01$.
+
+# References
+
+"Data Sets". Openintro.Org, 2021, https://www.openintro.org/data/index.php?data=loans_full_schema. 
+Accessed 13 Mar 2021.
+
+"Infer - Tidy Statistical Inference". Infer.Netlify.App, 2021, 
+https://infer.netlify.app/index.html.

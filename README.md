@@ -9,6 +9,8 @@
 | Lab 04      | :white_check_mark:      |
 | Lab 05      | :white_check_mark:      |
 | Lab 06      | :white_check_mark:      |
+| Lab 07      | :white_check_mark:      |
+| Lab 08      | :white_check_mark:      |
 
 
 ## Access
