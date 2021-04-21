@@ -1,0 +1,144 @@
+---
+title: "Lab 09: Logistic Regression"
+subtitle: ""
+author: ""
+date: ""
+editor_options: 
+  chunk_output_type: console
+output:
+  pdf_document: default
+---
+
+```{r set_up, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      comment = "#>", highlight = TRUE,
+                      fig.align = "center")
+```
+
+## Packages
+
+```{r packages}
+library(tidyverse)
+library(broom)
+```
+
+## Data
+
+```{r data}
+retirement <- read_csv("data/retirement_data.csv")
+```
+
+The 2018 election saw a near-record number of [retirements](https://www.pewresearch.org/fact-tank/2018/04/11/near-record-number-of-house-members-not-seeking-re-election-in-2018/) 
+from Congress. In this lab, you will be working with data from that election.
+
+The variables in this dataset are:
+
+- `stcd`: an ID number for the congressional district. Districts are listed in 
+          alphabetic order (e.g., 101 is Alabama's first district).
+
+- `dpres`: the two-party percentage of vote received by Hillary Clinton 
+           in the district in 2016. (Third party vote has been eliminated here, 
+           this represents Democratic vote/ (Democratic + Republican Vote).)
+
+- `retiring`: a dummy variable indicating whether the representative retired in 
+              2018. The includes both representatives who left politics 
+              altogether and those who sought higher office, as well as some 
+              who resigned early.
+
+- `gopseat`: a dummy variable indicating whether the seat was held by a 
+             Republican.
+
+- `age`: the age of the representative at the end of 2018.
+
+# Exercises
+
+## Exercise 1
+
+```{r ex-1}
+retirement <- retirement %>%
+  filter(!is.na(retiring))
+
+retirement <- retirement %>%
+  mutate(presvote = ifelse(gopseat == 1, 100 - dpres, dpres))
+
+retirement_mod <- glm(retiring ~ gopseat + age + presvote,
+                      data = retirement,
+                      family = "binomial")
+tidy(retirement_mod)
+```
+
+$$\text{log}\left(\frac{\hat{p}}{1-\hat{p}}\right) = 0.023 + 0.051~gopseat + 0.0013~age - 0.049~presvote$$
+
+## Exercise 2
+
+```{r ex-2}
+tidy(retirement_mod) %>%
+  mutate(estimate= exp(estimate))
+```
+
+Holding all else constant, for Republicans, the odds of retirement is 
+$e^{0.507} = 1.660$ times the odds of retirement for Democrats. 
+
+Holding all else constant, for every one year increase in age, the odds of 
+retirement are expected to be multiplied by $e^{0.013} = 1.013$.
+
+Holding all else constant, for every one percentage point increase in 
+presidential vote, the odds of retirement are expected to be multiplied by 
+$e^{-0.487} = 0.952$.
+
+## Exercise 3
+
+```{r ex-3}
+mean_age <- mean(retirement$age)
+
+tibble(
+  age      = rep(mean_age, times = 126),
+  gopseat  = rep(c(0, 1), each = 63),
+  presvote = rep(33:95, times = 2)
+) %>%
+  augment(retirement_mod, newdata = .) %>%
+  mutate(p = exp(.fitted) / (1 + exp(.fitted))) %>% 
+  ggplot(aes(x = presvote, y = p, color = factor(gopseat))) +
+  geom_line() +
+  scale_color_manual(values = c("#0015BC", "#DE0100")) +
+  labs(title = "Probability of a Retirement",
+       y = "Predicted Probability of Retirement", x= "Presidential Vote",
+       color = "GOP Seat") +
+  theme_bw()
+```
+
+For all levels of presidential vote, the probability of a Republican retirement
+is higher than that of a Democratic retirement, although this gap is especially
+large for marginal seats (i.e., where the values of presidential vote are low). 
+As presidential vote increases, the probability of a retirement decreases. 
+
+## Exercise 4
+
+```{r ex-4}
+tibble(
+  age      = 78,
+  gopseat  = 0,
+  presvote = 70.75
+  ) %>%
+  augment(retirement_mod, newdata = .) %>%
+  mutate(p = exp(.fitted) / (1 + exp(.fitted))) %>%
+  pull("p")
+```
+
+According to our model, Price has a 8.25% predicted probability of retirement 
+in 2018.
+
+## Exercise 5
+
+```{r ex-5}
+retirement_mod %>%
+  augment(data = retirement) %>%
+  mutate(prob = (exp(.fitted) / (1 + exp(.fitted)))) %>%
+  select(stcd, prob, retiring) %>%
+  arrange(desc(prob)) %>% 
+  slice(1)
+```
+
+No representative is given over a 50% probability of retirement. The district 
+with the code 3805 (this is PA's 5th district, no need to give answer in words) 
+was given the highest probability of retirement and they did indeed retire. 
